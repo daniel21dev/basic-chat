@@ -15,6 +15,9 @@ io.on('connection', (socket) => {
         io.emit('chat message', msg);
     });
     
+    socket.on('escribiendo',(e)=>{
+        io.emit('escribiendo',e)
+    })
 });
 
 server.listen(3000, () => {
