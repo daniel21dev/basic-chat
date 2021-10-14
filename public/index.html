@@ -4,6 +4,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js" integrity="sha512-6+YN/9o9BWrk6wSfGxQGpt3EUK6XeHi6yeHV+TYD2GR0Sj/cggRpXr1BrAQf0as6XslxomMUxXp2vIl+fv0QRA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <title>Socket.IO chat</title>
     <style>
         body{
@@ -21,11 +22,15 @@
             width: 500px;
             justify-content: space-between;
         }
+        .image{
+            max-width: 500px;
+        }
     </style>
   </head>
   <body>
     <form id="form" action="">
         <input id="name"  type="text" placeholder="tu nombre"/>
+        <input type="file" name="file" id="file" />
         <input id="input" autocomplete="off" placeholder="tu mensaje"/><button>Send</button>
     </form>
     <span>-</span>
@@ -39,6 +44,8 @@
         var input = document.getElementById('input');
         var nameInput = document.getElementById('name');
         var span = document.querySelector('span')
+
+        const sound = new Howl({src: ['fb-sound.mp3']});
 
         form.addEventListener('submit', function(e) {
           e.preventDefault();
@@ -61,15 +68,38 @@
             item.innerHTML = `<span style="color:#${color}">${name}</span> - ${msg} <hr/>`;
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
+            sound.play();
         });
+
         socket.on('escribiendo',(e)=> {
             span.innerText = `${e.name} esta escribiendo ...`
             setTimeout(()=> span.innerText = '', 2000);
         })
 
+        socket.on('image',(img)=>{
+            var item = document.createElement('li');
+            const imgElement = new Image();
+            imgElement.src = `data:image/jpg;base64,${img}`;
+            imgElement.classList.add('image'); 
+            item.appendChild(imgElement);
+            messages.appendChild(item);
+            sound.play();
+        })
+
         if( !localStorage.getItem('color') ){
             localStorage.setItem('color', Math.floor(Math.random()*16777215).toString(16) )
         }
+
+        document.getElementById('file').addEventListener('change', function() {
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const base64 = this.result.replace(/.*base64,/, '');
+                socket.emit('image', base64);
+            };
+            reader.readAsDataURL(this.files[0]);
+
+        }, false);
 
     </script>
   </body>
